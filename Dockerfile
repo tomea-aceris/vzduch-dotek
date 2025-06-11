@@ -5,7 +5,7 @@ COPY *.csproj .
 RUN dotnet restore
 
 COPY . .
-RUN dotnet publish -c release -o /app -r linux-x64 --self-contained true --no-restore
+RUN dotnet publish -c release -o /app -r linux-arm64 --self-contained true --no-restore
 
 # final stage/image
 FROM mcr.microsoft.com/dotnet/runtime:8.0-buster-slim
