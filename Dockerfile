@@ -10,7 +10,7 @@ RUN dotnet publish -c release -o /app -r linux-arm64 --self-contained true --no-
 # final stage/image
 FROM mcr.microsoft.com/dotnet/runtime:3.1.12-bullseye-slim-arm64v8
 
-LABEL Mike <ozczecho@yahoo.com>
+LABEL Tome <tome@aceris.com.au>
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
