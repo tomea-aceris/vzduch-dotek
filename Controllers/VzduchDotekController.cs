@@ -273,5 +273,54 @@ namespace VzduchDotek.Net.Controllers
 
             return Content(response, "application/json");
         }
+
+        // Model for raw command request
+        public class RawCommandRequest
+        {
+            public byte Command { get; set; }
+            public byte SubCommand { get; set; }
+            public byte Data { get; set; }
+            public byte[] ExtraData { get; set; }
+        }
+
+        [HttpPost("aircons/{selectedId}/zones/{zoneId}/rawcommand")]
+        public object SendRawZoneCommand(int selectedId, int zoneId, [FromBody] RawCommandRequest request)
+        {
+            Log.ForContext<VzduchDotekController>().Debug(
+                "Sending raw command to Zone [{ZoneId}]: Command={Command}, SubCommand={SubCommand}, Data={Data}",
+                zoneId, request.Command, request.SubCommand, request.Data);
+
+            // Build raw message
+            byte[] message = new byte[13];
+            message[0] = 85;                // Start byte (0x55)
+            message[1] = request.Command;   // Command byte
+            message[2] = 12;                // Message length
+            message[3] = (byte)zoneId;      // Zone ID
+            message[4] = request.SubCommand;// Sub-command
+            message[5] = request.Data;      // Data byte
+
+            // Copy any extra data
+            if (request.ExtraData != null && request.ExtraData.Length > 0)
+            {
+                Array.Copy(request.ExtraData, 0, message, 6, Math.Min(request.ExtraData.Length, 6));
+            }
+
+            // Calculate checksum (sum of all bytes mod 256)
+            byte checksum = 0;
+            for (int i = 0; i < 12; i++)
+            {
+                checksum += message[i];
+            }
+            message[12] = checksum;
+
+            // Send the command
+            var result = _client.ConnectAndSend(message);
+            var parser = new MessageResponseParser();
+            var at = parser.Parse(result);
+
+            var response = JsonSerializer.Serialize(at, typeof(AirTouchSystem), SourceGenerationContext.Default);
+            return Content(response, "application/json");
+        }
+
     }
 }
